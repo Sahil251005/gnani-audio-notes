@@ -10,10 +10,10 @@ import {
 import Link from "next/link";
 
 import {
-  uploadAudio,
-  getUploadStatus,
   getUpload,
   getUploads,
+  getUploadStatus,
+  uploadAudio,
 } from "@/lib/api";
 
 
@@ -73,22 +73,22 @@ const STATUS_MESSAGES: Record<
   string
 > = {
   UPLOADED:
-    "Audio upload completed. Preparing it for processing.",
+    "Audio uploaded successfully. Preparing it for processing.",
 
   QUEUED:
-    "Audio is queued and waiting for the background worker.",
+    "The audio is queued and waiting for the background worker.",
 
   TRANSCRIBING:
-    "Gnani is transcribing the audio.",
+    "Gnani Batch STT is transcribing the audio.",
 
   SUMMARIZING:
-    "Transcription is complete. Generating the summary.",
+    "The transcript is ready. Generating the summary.",
 
   COMPLETED:
     "Processing is complete. Transcript and summary are ready.",
 
   FAILED:
-    "Processing could not be completed.",
+    "The audio could not be processed successfully.",
 
   CANCELLED:
     "Processing was cancelled.",
@@ -121,7 +121,11 @@ type RecentUpload = {
 };
 
 
-function AudioIllustration() {
+/* -------------------------------------------------
+   SMALL UI COMPONENTS
+------------------------------------------------- */
+
+function WaveIcon() {
   return (
     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-white shadow-sm">
       <svg
@@ -131,9 +135,9 @@ function AudioIllustration() {
         aria-hidden="true"
       >
         <path
-          d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"
+          d="M3 12h2m2-4v8m3-12v16m3-12v8m3-6v4m3-2h2"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="1.8"
           strokeLinecap="round"
         />
       </svg>
@@ -142,35 +146,122 @@ function AudioIllustration() {
 }
 
 
-function HistoryIllustration() {
+function UploadIcon() {
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        className="h-5 w-5 text-blue-600"
-        aria-hidden="true"
-      >
-        <path
-          d="M12 8v4l2.5 1.5M21 12a9 9 0 1 1-3-6.7"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        <path
-          d="M18 2v4h-4"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
+
+function HistoryIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 8v4l2.5 1.5M21 12a9 9 0 1 1-3-6.7"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M18 2v4h-4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
+function DocumentIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path
+        d="M7 3h7l4 4v14H7V3Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M14 3v5h4M10 12h5M10 16h5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+
+function SparkIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path
+        d="m12 3 1.1 3.4A5.4 5.4 0 0 0 16.6 10L20 11l-3.4 1.1a5.4 5.4 0 0 0-3.5 3.5L12 19l-1.1-3.4a5.4 5.4 0 0 0-3.5-3.5L4 11l3.4-1a5.4 5.4 0 0 0 3.5-3.6L12 3Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
+function ArrowIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M5 12h14M14 7l5 5-5 5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
+/* -------------------------------------------------
+   HELPERS
+------------------------------------------------- */
 
 function createPreview(
   text: string,
@@ -220,20 +311,24 @@ function statusStyle(
   status: string
 ) {
   if (status === "COMPLETED") {
-    return "border border-green-100 bg-green-50 text-green-700";
+    return "border-green-200 bg-green-50 text-green-700";
   }
 
   if (status === "FAILED") {
-    return "border border-red-100 bg-red-50 text-red-700";
+    return "border-red-200 bg-red-50 text-red-700";
   }
 
   if (status === "CANCELLED") {
-    return "border border-gray-200 bg-gray-100 text-gray-600";
+    return "border-gray-200 bg-gray-100 text-gray-600";
   }
 
-  return "border border-blue-100 bg-blue-50 text-blue-700";
+  return "border-blue-200 bg-blue-50 text-blue-700";
 }
 
+
+/* -------------------------------------------------
+   PAGE
+------------------------------------------------- */
 
 export default function Home() {
   const [file, setFile] =
@@ -289,9 +384,10 @@ export default function Home() {
   ] = useState(false);
 
 
-  /*
-   * Recent uploads
-   */
+  /* -----------------------------------------------
+     HISTORY
+  ------------------------------------------------ */
+
   const refreshRecentUploads =
     useCallback(async () => {
       try {
@@ -326,9 +422,10 @@ export default function Home() {
     }, []);
 
 
-  /*
-   * Restore current dashboard upload.
-   */
+  /* -----------------------------------------------
+     RESTORE CURRENT JOB
+  ------------------------------------------------ */
+
   useEffect(() => {
     const storedUploadId =
       sessionStorage.getItem(
@@ -343,9 +440,10 @@ export default function Home() {
   }, []);
 
 
-  /*
-   * Load recent history and refresh it.
-   */
+  /* -----------------------------------------------
+     REFRESH HISTORY
+  ------------------------------------------------ */
+
   useEffect(() => {
     void refreshRecentUploads();
 
@@ -359,9 +457,12 @@ export default function Home() {
     return () => {
       clearInterval(timer);
     };
-
   }, [refreshRecentUploads]);
 
+
+  /* -----------------------------------------------
+     UPLOAD
+  ------------------------------------------------ */
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
@@ -414,9 +515,10 @@ export default function Home() {
   }
 
 
-  /*
-   * Poll current processing status.
-   */
+  /* -----------------------------------------------
+     POLL STATUS
+  ------------------------------------------------ */
+
   useEffect(() => {
     if (!currentUploadId) {
       return;
@@ -448,7 +550,6 @@ export default function Home() {
           result.status
         );
 
-
         if (
           TERMINAL_STATUSES.includes(
             result.status
@@ -457,7 +558,6 @@ export default function Home() {
           void refreshRecentUploads();
           return;
         }
-
 
         timer = setTimeout(
           refreshStatus,
@@ -493,16 +593,16 @@ export default function Home() {
         clearTimeout(timer);
       }
     };
-
   }, [
     currentUploadId,
     refreshRecentUploads,
   ]);
 
 
-  /*
-   * Load current job details.
-   */
+  /* -----------------------------------------------
+     LOAD DETAILS
+  ------------------------------------------------ */
+
   useEffect(() => {
     if (!currentUploadId) {
       return;
@@ -557,7 +657,6 @@ export default function Home() {
     return () => {
       active = false;
     };
-
   }, [
     currentUploadId,
     currentStatus,
@@ -583,32 +682,69 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50">
 
-      <div className="mx-auto max-w-[1280px] px-6 py-10 lg:px-8">
+      <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-6 lg:px-8 lg:py-10">
 
 
-        {/* HERO */}
-        <section className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-white to-blue-50/60 px-7 py-7 shadow-sm">
+        {/* ---------------------------------------
+            HERO
+        ---------------------------------------- */}
 
-          <div className="flex items-start gap-5">
+        <section className="relative overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50 px-6 py-8 shadow-sm sm:px-8">
 
-            <AudioIllustration />
+          <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-blue-100/50 blur-3xl" />
+
+          <div className="relative flex flex-col justify-between gap-7 md:flex-row md:items-center">
+
+            <div className="flex items-start gap-4 sm:gap-5">
+
+              <WaveIcon />
+
+              <div>
+
+                <div className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-blue-700">
+                  Audio Notes Workspace
+                </div>
+
+                <h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                  Turn audio into useful notes
+                </h1>
+
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                  Upload an audio file, follow its
+                  processing status, and review the
+                  generated transcript and summary.
+                </p>
+
+              </div>
+
+            </div>
 
 
-            <div className="max-w-3xl">
+            <div className="grid grid-cols-2 gap-3 sm:flex">
 
-              <p className="font-medium text-blue-600">
-                Audio Notes Workspace
-              </p>
+              <div className="rounded-xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm">
 
-              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
-                Turn audio into structured notes
-              </h1>
+                <p className="text-xs font-medium text-slate-400">
+                  Processing
+                </p>
 
-              <p className="mt-2 max-w-2xl text-base leading-7 text-gray-600">
-                Upload audio, follow its processing
-                workflow, and review the generated
-                transcript and summary.
-              </p>
+                <p className="mt-1 text-sm font-semibold text-slate-800">
+                  Background jobs
+                </p>
+
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm">
+
+                <p className="text-xs font-medium text-slate-400">
+                  Output
+                </p>
+
+                <p className="mt-1 text-sm font-semibold text-slate-800">
+                  Transcript + Summary
+                </p>
+
+              </div>
 
             </div>
 
@@ -617,76 +753,101 @@ export default function Home() {
         </section>
 
 
-        {/* DASHBOARD */}
-        <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_365px]">
+        {/* ---------------------------------------
+            MAIN GRID
+        ---------------------------------------- */}
+
+        <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_350px] xl:grid-cols-[minmax(0,1fr)_370px]">
 
 
-          {/* LEFT SIDE */}
+          {/* =====================================
+              LEFT COLUMN
+          ====================================== */}
+
           <div className="min-w-0 space-y-6">
 
 
-            {/* UPLOAD */}
+            {/* -----------------------------------
+                UPLOAD CARD
+            ------------------------------------ */}
+
             <form
               onSubmit={handleSubmit}
-              className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
             >
 
-              <div className="border-b border-gray-100 px-6 py-5">
+              <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-5">
 
-                <h2 className="text-xl font-semibold tracking-tight text-gray-900">
-                  Create Audio Note
-                </h2>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                  <UploadIcon />
+                </div>
 
-                <p className="mt-1 text-sm leading-6 text-gray-500">
-                  Choose an audio file and its
-                  spoken language to start processing.
-                </p>
+                <div>
+
+                  <h2 className="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+                    Create Audio Note
+                  </h2>
+
+                  <p className="mt-0.5 text-sm text-slate-500">
+                    Choose the audio and its spoken language.
+                  </p>
+
+                </div>
 
               </div>
 
 
               <div className="p-6">
 
+                <div className="grid gap-5 md:grid-cols-2">
 
-                <div className="grid gap-6 md:grid-cols-2">
 
-
-                  {/* Audio */}
+                  {/* FILE */}
                   <div>
 
                     <label
                       htmlFor="audio"
-                      className="block text-sm font-semibold text-gray-800"
+                      className="text-sm font-semibold text-slate-800"
                     >
                       Audio file
                     </label>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      MP3, WAV, M4A, AAC, OGG or FLAC
+                    </p>
 
                     <input
                       id="audio"
                       type="file"
                       accept=".mp3,.wav,.m4a,.aac,.ogg,.flac"
-                      onChange={(event) =>
+                      onChange={(event) => {
                         setFile(
                           event.target
                             .files?.[0] ??
                             null
-                        )
-                      }
-                      className="mt-2 block w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                        );
+
+                        setError("");
+                      }}
+                      className="mt-3 block w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-blue-700 hover:border-blue-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                     />
 
                   </div>
 
 
-                  {/* Language */}
+                  {/* LANGUAGE */}
                   <div>
 
                     <label
                       htmlFor="language"
-                      className="block text-sm font-semibold text-gray-800"
+                      className="text-sm font-semibold text-slate-800"
                     >
-                      Language
+                      Spoken language
                     </label>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      Select the language used in the recording
+                    </p>
 
                     <select
                       id="language"
@@ -696,27 +857,17 @@ export default function Home() {
                           event.target.value
                         )
                       }
-                      className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      className="mt-3 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition hover:border-blue-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                     >
 
                       {LANGUAGES.map(
                         (language) => (
                           <option
-                            key={
-                              language.code
-                            }
-                            value={
-                              language.code
-                            }
+                            key={language.code}
+                            value={language.code}
                           >
-                            {
-                              language.name
-                            }{" "}
-                            (
-                            {
-                              language.code
-                            }
-                            )
+                            {language.name} (
+                            {language.code})
                           </option>
                         )
                       )}
@@ -728,26 +879,29 @@ export default function Home() {
                 </div>
 
 
-                {/* Selected file */}
+                {/* SELECTED FILE */}
                 {file && (
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-blue-100 bg-blue-50/40 px-4 py-3.5">
+                  <div className="mt-5 flex flex-col justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-3.5 sm:flex-row sm:items-center">
 
                     <div className="min-w-0">
 
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs font-medium uppercase tracking-wide text-blue-600">
                         Selected audio
                       </p>
 
-                      <p className="mt-1 truncate text-sm font-semibold text-gray-900">
+                      <p
+                        className="mt-1 truncate text-sm font-semibold text-slate-900"
+                        title={file.name}
+                      >
                         {file.name}
                       </p>
 
                     </div>
 
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-2">
 
-                      <span className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-600">
+                      <span className="rounded-lg border border-blue-100 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600">
                         {(
                           file.size /
                           (1024 * 1024)
@@ -755,7 +909,7 @@ export default function Home() {
                         MB
                       </span>
 
-                      <span className="text-sm text-gray-500">
+                      <span className="rounded-lg border border-blue-100 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600">
                         {file.type ||
                           "Audio"}
                       </span>
@@ -766,33 +920,29 @@ export default function Home() {
                 )}
 
 
-                {/* Real upload progress */}
+                {/* UPLOAD PROGRESS */}
                 {loading && (
-                  <div className="mt-5 rounded-xl bg-gray-50 p-4">
+                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
 
-                    <div className="flex justify-between text-sm">
+                    <div className="flex items-center justify-between text-sm">
 
-                      <span className="font-medium text-gray-700">
-                        {uploadProgress <
-                        100
-                          ? "Uploading audio"
+                      <span className="font-medium text-slate-700">
+                        {uploadProgress < 100
+                          ? "Uploading audio..."
                           : "Upload received"}
                       </span>
 
-                      <span className="font-semibold text-blue-700">
-                        {
-                          uploadProgress
-                        }
-                        %
+                      <span className="font-semibold tabular-nums text-blue-700">
+                        {uploadProgress}%
                       </span>
 
                     </div>
 
 
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-200">
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
 
                       <div
-                        className="h-full rounded-full bg-blue-600 transition-all"
+                        className="h-full rounded-full bg-blue-600 transition-all duration-300"
                         style={{
                           width: `${uploadProgress}%`,
                         }}
@@ -804,109 +954,117 @@ export default function Home() {
                 )}
 
 
+                {/* ERROR */}
+                {error && (
+                  <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3.5">
+
+                    <p className="text-sm font-medium text-red-700">
+                      {error}
+                    </p>
+
+                  </div>
+                )}
+
+
+                {/* BUTTON */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  <UploadIcon />
+
                   {loading
                     ? "Uploading..."
-                    : "Upload Audio"}
+                    : "Upload and Process"}
                 </button>
-
-
-                {error && (
-                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {error}
-                  </div>
-                )}
 
               </div>
 
             </form>
 
 
-            {/* CURRENT JOB */}
+            {/* -----------------------------------
+                CURRENT JOB
+            ------------------------------------ */}
+
             {currentUploadId &&
               currentStatus && (
 
-                <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
 
-                  {/* JOB HEADER */}
-                  <div className="grid gap-5 px-6 py-6 md:grid-cols-[minmax(0,1fr)_auto]">
+                  {/* HEADER */}
+                  <div className="flex flex-col justify-between gap-5 px-6 py-6 sm:flex-row sm:items-start">
 
-
-                    {/* LEFT INFORMATION */}
                     <div className="min-w-0">
 
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
 
-                        <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                           Current Job
-                        </h2>
-
+                        </p>
 
                         {currentDetails?.language_code && (
-                          <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-sm font-medium text-gray-600">
-                            {
-                              currentDetails.language_code
-                            }
+                          <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                            {currentDetails.language_code}
                           </span>
                         )}
 
                       </div>
 
 
-                      {currentDetails?.filename && (
-                        <p
-                          className="mt-3 truncate text-base text-gray-600"
-                          title={
-                            currentDetails.filename
-                          }
-                        >
-                          {
-                            currentDetails.filename
-                          }
-                        </p>
-                      )}
-
-
-                      <div className="mt-5">
-
-                        <p className="text-xl font-semibold text-gray-900">
-                          {STATUS_LABELS[
-                            currentStatus
-                          ] ??
-                            currentStatus}
-                        </p>
-
-                        <p className="mt-1.5 text-base leading-7 text-gray-600">
-                          {STATUS_MESSAGES[
-                            currentStatus
-                          ]}
-                        </p>
-
-                      </div>
-
-                    </div>
-
-
-                    {/* RIGHT STATUS */}
-                    <div className="md:justify-self-end">
-
-                      <span
-                        className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${statusStyle(
-                          currentStatus
-                        )}`}
-                      >
+                      <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
                         {STATUS_LABELS[
                           currentStatus
                         ] ??
                           currentStatus}
-                      </span>
+                      </h2>
+
+
+                      {currentDetails?.filename && (
+                        <p
+                          className="mt-2 max-w-xl truncate text-sm font-medium text-slate-600"
+                          title={
+                            currentDetails.filename
+                          }
+                        >
+                          {currentDetails.filename}
+                        </p>
+                      )}
+
+
+                      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+                        {STATUS_MESSAGES[
+                          currentStatus
+                        ]}
+                      </p>
 
                     </div>
+
+
+                    <span
+                      className={`inline-flex w-fit shrink-0 items-center rounded-full border px-3 py-1.5 text-xs font-semibold ${statusStyle(
+                        currentStatus
+                      )}`}
+                    >
+                      <span
+                        className={`mr-2 h-2 w-2 rounded-full ${
+                          currentStatus ===
+                          "COMPLETED"
+                            ? "bg-green-500"
+                            : currentStatus ===
+                              "FAILED"
+                            ? "bg-red-500"
+                            : "bg-blue-500"
+                        }`}
+                      />
+
+                      {STATUS_LABELS[
+                        currentStatus
+                      ] ??
+                        currentStatus}
+                    </span>
 
                   </div>
 
@@ -919,42 +1077,41 @@ export default function Home() {
                     currentStatus
                   ) && (
 
-                    <div className="border-t border-gray-100 bg-slate-50/70 px-6 py-6">
+                    <div className="border-t border-slate-100 bg-slate-50/70 px-6 py-6">
 
                       <div className="flex items-end justify-between gap-4">
 
                         <div>
 
-                          <p className="font-semibold text-gray-900">
+                          <p className="text-sm font-semibold text-slate-900">
                             Processing workflow
                           </p>
 
-                          <p className="mt-1 text-sm text-gray-500">
-                            Follow the current
-                            processing stage.
+                          <p className="mt-1 text-xs text-slate-500">
+                            Current progress through the processing pipeline
                           </p>
 
                         </div>
 
 
-                        <span className="text-2xl font-semibold tabular-nums text-gray-900">
-                          {
-                            processingProgress
-                          }
-                          %
+                        <span className="text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
+                          {processingProgress}
+                          <span className="ml-0.5 text-base text-slate-400">
+                            %
+                          </span>
                         </span>
 
                       </div>
 
 
-                      {/* Bar */}
-                      <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-gray-200">
+                      {/* BAR */}
+                      <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
 
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
                             currentStatus ===
                             "COMPLETED"
-                              ? "bg-green-600"
+                              ? "bg-green-500"
                               : "bg-blue-600"
                           }`}
                           style={{
@@ -965,8 +1122,8 @@ export default function Home() {
                       </div>
 
 
-                      {/* Stages */}
-                      <div className="mt-6 grid grid-cols-5 gap-2">
+                      {/* STAGES */}
+                      <div className="mt-6 grid grid-cols-5 gap-1 sm:gap-3">
 
                         {STAGES.map(
                           (
@@ -982,44 +1139,52 @@ export default function Home() {
                               stage ===
                               currentStatus;
 
-                            const completed =
+                            const finalCompleted =
                               currentStatus ===
                               "COMPLETED";
 
                             return (
                               <div
                                 key={stage}
-                                className="text-center"
+                                className="min-w-0 text-center"
                               >
 
                                 <div
-                                  className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full border ${
-                                    completed &&
+                                  className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full border-2 transition ${
+                                    finalCompleted &&
                                     reached
-                                      ? "border-green-600 bg-green-600"
+                                      ? "border-green-500 bg-green-500"
                                       : active
                                       ? "border-blue-600 bg-blue-600"
                                       : reached
-                                      ? "border-gray-500 bg-gray-500"
-                                      : "border-gray-300 bg-white"
+                                      ? "border-blue-300 bg-blue-100"
+                                      : "border-slate-300 bg-white"
                                   }`}
                                 >
                                   {reached && (
-                                    <div className="h-2 w-2 rounded-full bg-white" />
+                                    <span
+                                      className={`h-2 w-2 rounded-full ${
+                                        finalCompleted
+                                          ? "bg-white"
+                                          : active
+                                          ? "bg-white"
+                                          : "bg-blue-500"
+                                      }`}
+                                    />
                                   )}
                                 </div>
 
 
                                 <p
-                                  className={`mt-2 text-sm ${
-                                    completed &&
+                                  className={`mt-2 truncate text-[11px] sm:text-xs ${
+                                    finalCompleted &&
                                     reached
-                                      ? "font-medium text-green-700"
+                                      ? "font-semibold text-green-700"
                                       : active
                                       ? "font-semibold text-blue-700"
                                       : reached
-                                      ? "text-gray-600"
-                                      : "text-gray-400"
+                                      ? "font-medium text-slate-600"
+                                      : "text-slate-400"
                                   }`}
                                 >
                                   {stage ===
@@ -1041,20 +1206,27 @@ export default function Home() {
                   )}
 
 
-                  {/* Failure */}
+                  {/* FAILURE */}
                   {currentStatus ===
                     "FAILED" && (
 
                     <div className="border-t border-red-100 bg-red-50 px-6 py-5">
 
-                      <p className="font-semibold text-red-800">
+                      <p className="text-sm font-semibold text-red-800">
                         Processing failed
                       </p>
 
-                      <p className="mt-1 text-sm text-red-700">
+                      <p className="mt-1.5 text-sm leading-6 text-red-700">
                         {currentDetails?.error_message ??
                           "The audio could not be processed successfully."}
                       </p>
+
+                      {currentDetails?.error_code && (
+                        <p className="mt-2 text-xs font-medium text-red-500">
+                          Error code:{" "}
+                          {currentDetails.error_code}
+                        </p>
+                      )}
 
                     </div>
 
@@ -1064,136 +1236,176 @@ export default function Home() {
               )}
 
 
-            {/* TRANSCRIPT */}
-            {currentUploadId &&
-              currentDetails?.transcript && (
+            {/* -----------------------------------
+                TRANSCRIPT + SUMMARY
+            ------------------------------------ */}
 
-                <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            {(currentDetails?.transcript ||
+              currentDetails?.summary) && (
 
-                  <div className="flex items-center justify-between gap-5 border-b border-gray-100 px-6 py-5">
-
-                    <div>
-
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        Transcript
-                      </h2>
-
-                      <p className="mt-1 text-sm text-gray-500">
-                        Generated from your
-                        uploaded audio.
-                      </p>
-
-                    </div>
+              <div className="grid gap-6 xl:grid-cols-2">
 
 
-                    <Link
-                      href={`/uploads/${currentUploadId}`}
-                      className="shrink-0 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 font-medium text-blue-700 transition hover:bg-blue-100"
-                    >
-                      Read more →
-                    </Link>
+                {/* TRANSCRIPT */}
+                {currentUploadId &&
+                  currentDetails?.transcript && (
 
-                  </div>
+                    <section className="flex min-h-[280px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
+                      <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
 
-                  <div className="px-6 py-6">
+                        <div className="flex items-center gap-3">
 
-                    <p className="whitespace-pre-wrap text-base leading-7 text-gray-600">
-                      {createPreview(
-                        currentDetails.transcript,
-                        400
-                      )}
-                    </p>
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                            <DocumentIcon />
+                          </div>
 
-                  </div>
+                          <div>
 
-                </section>
-              )}
+                            <h2 className="font-semibold text-slate-950">
+                              Transcript
+                            </h2>
 
+                            <p className="text-xs text-slate-400">
+                              Generated from the uploaded audio
+                            </p>
 
-            {/* SUMMARY */}
-            {currentUploadId &&
-              currentDetails?.summary && (
+                          </div>
 
-                <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        </div>
 
-                  <div className="flex items-center justify-between gap-5 border-b border-gray-100 px-6 py-5">
-
-                    <div>
-
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        Summary
-                      </h2>
-
-                      <p className="mt-1 text-sm text-gray-500">
-                        Key points generated
-                        from the transcript.
-                      </p>
-
-                    </div>
+                      </div>
 
 
-                    <Link
-                      href={`/uploads/${currentUploadId}`}
-                      className="shrink-0 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 font-medium text-blue-700 transition hover:bg-blue-100"
-                    >
-                      Read more →
-                    </Link>
+                      <div className="flex-1 px-5 py-5">
 
-                  </div>
+                        <p className="whitespace-pre-wrap text-sm leading-7 text-slate-600">
+                          {createPreview(
+                            currentDetails.transcript,
+                            520
+                          )}
+                        </p>
+
+                      </div>
 
 
-                  <div className="px-6 py-6">
+                      <div className="border-t border-slate-100 px-5 py-4">
 
-                    <p className="whitespace-pre-wrap text-base leading-7 text-gray-600">
-                      {createPreview(
-                        currentDetails.summary,
-                        330
-                      )}
-                    </p>
+                        <Link
+                          href={`/uploads/${currentUploadId}`}
+                          className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 transition hover:text-blue-800"
+                        >
+                          Read full transcript
 
-                  </div>
+                          <ArrowIcon />
+                        </Link>
 
-                </section>
-              )}
+                      </div>
+
+                    </section>
+                  )}
+
+
+                {/* SUMMARY */}
+                {currentUploadId &&
+                  currentDetails?.summary && (
+
+                    <section className="flex min-h-[280px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                      <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
+
+                        <div className="flex items-center gap-3">
+
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                            <SparkIcon />
+                          </div>
+
+                          <div>
+
+                            <h2 className="font-semibold text-slate-950">
+                              Summary
+                            </h2>
+
+                            <p className="text-xs text-slate-400">
+                              Generated from the saved transcript
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="flex-1 px-5 py-5">
+
+                        <p className="whitespace-pre-wrap text-sm leading-7 text-slate-600">
+                          {createPreview(
+                            currentDetails.summary,
+                            430
+                          )}
+                        </p>
+
+                      </div>
+
+
+                      <div className="border-t border-slate-100 px-5 py-4">
+
+                        <Link
+                          href={`/uploads/${currentUploadId}`}
+                          className="inline-flex items-center gap-2 text-sm font-semibold text-violet-700 transition hover:text-violet-800"
+                        >
+                          View complete note
+
+                          <ArrowIcon />
+                        </Link>
+
+                      </div>
+
+                    </section>
+                  )}
+
+              </div>
+            )}
 
           </div>
 
 
-          {/* RECENT HISTORY */}
+          {/* =====================================
+              RIGHT COLUMN - HISTORY
+          ====================================== */}
+
           <aside className="self-start lg:sticky lg:top-6">
 
-            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
 
-              {/* Header */}
-              <div className="border-b border-gray-100 bg-gradient-to-br from-white to-blue-50/50 px-5 py-5">
+              {/* HEADER */}
+              <div className="border-b border-slate-100 bg-gradient-to-br from-white to-blue-50/50 px-5 py-5">
 
                 <div className="flex items-center gap-3">
 
-                  <HistoryIllustration />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                    <HistoryIcon />
+                  </div>
 
 
                   <div className="min-w-0 flex-1">
 
                     <div className="flex items-center justify-between gap-3">
 
-                      <h2 className="text-lg font-semibold text-gray-900">
-                        Recent uploads
+                      <h2 className="text-base font-semibold text-slate-950">
+                        Recent Uploads
                       </h2>
 
-
-                      <span className="rounded-full border border-blue-100 bg-white px-2.5 py-1 text-sm font-semibold text-blue-700">
-                        {
-                          recentUploads.length
-                        }
+                      <span className="rounded-full border border-blue-100 bg-white px-2.5 py-1 text-xs font-semibold text-blue-700">
+                        {recentUploads.length}
                       </span>
 
                     </div>
 
-
-                    <p className="mt-1 text-sm text-gray-500">
-                      Latest 10 audio notes.
+                    <p className="mt-1 text-xs text-slate-500">
+                      Your latest audio notes
                     </p>
 
                   </div>
@@ -1203,14 +1415,14 @@ export default function Home() {
               </div>
 
 
-              {/* Items */}
+              {/* HISTORY CONTENT */}
               <div className="space-y-2.5 p-3.5">
 
 
                 {historyLoading && (
-                  <div className="rounded-xl bg-gray-50 px-4 py-5">
+                  <div className="rounded-xl bg-slate-50 px-4 py-6 text-center">
 
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-slate-500">
                       Loading recent uploads...
                     </p>
 
@@ -1221,15 +1433,13 @@ export default function Home() {
                 {!historyLoading &&
                   historyError && (
 
-                    <div className="rounded-xl bg-gray-50 px-4 py-5">
+                    <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-5">
 
-                      <p className="text-sm text-gray-500">
-                        Recent uploads could
-                        not be loaded.
+                      <p className="text-sm text-red-700">
+                        Recent uploads could not be loaded.
                       </p>
 
                     </div>
-
                   )}
 
 
@@ -1238,19 +1448,21 @@ export default function Home() {
                   recentUploads.length ===
                     0 && (
 
-                    <div className="rounded-xl bg-gray-50 px-4 py-7 text-center">
+                    <div className="rounded-xl bg-slate-50 px-4 py-8 text-center">
 
-                      <p className="font-medium text-gray-800">
+                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm">
+                        <HistoryIcon />
+                      </div>
+
+                      <p className="mt-3 text-sm font-semibold text-slate-800">
                         No uploads yet
                       </p>
 
-                      <p className="mt-1 text-sm text-gray-500">
-                        Recent audio notes
-                        will appear here.
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        Your recent audio notes will appear here.
                       </p>
 
                     </div>
-
                   )}
 
 
@@ -1262,44 +1474,41 @@ export default function Home() {
                       <Link
                         key={upload.id}
                         href={`/uploads/${upload.id}`}
-                        className="group block rounded-xl border border-gray-100 bg-white px-4 py-3.5 transition hover:border-blue-100 hover:bg-blue-50/30"
+                        className="group block rounded-xl border border-slate-100 bg-white px-4 py-3.5 transition hover:border-blue-200 hover:bg-blue-50/30"
                       >
 
                         <div className="flex items-start justify-between gap-3">
 
-
                           <div className="min-w-0">
 
-                            <p className="truncate text-sm font-medium text-gray-900 group-hover:text-blue-700">
-                              {
-                                upload.filename
-                              }
+                            <p className="truncate text-sm font-semibold text-slate-800 transition group-hover:text-blue-700">
+                              {upload.filename}
                             </p>
 
 
-                            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
 
                               {upload.language_code && (
-                                <span className="text-gray-500">
-                                  {
-                                    upload.language_code
-                                  }
+                                <span className="font-medium text-slate-500">
+                                  {upload.language_code}
                                 </span>
                               )}
 
 
-                              {upload.created_at && (
-                                <>
-                                  <span className="text-gray-300">
+                              {upload.language_code &&
+                                upload.created_at && (
+                                  <span className="text-slate-300">
                                     •
                                   </span>
+                                )}
 
-                                  <span className="text-gray-400">
-                                    {formatUploadDate(
-                                      upload.created_at
-                                    )}
-                                  </span>
-                                </>
+
+                              {upload.created_at && (
+                                <span className="text-slate-400">
+                                  {formatUploadDate(
+                                    upload.created_at
+                                  )}
+                                </span>
                               )}
 
                             </div>
@@ -1308,7 +1517,7 @@ export default function Home() {
 
 
                           <span
-                            className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${statusStyle(
+                            className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-semibold ${statusStyle(
                               upload.status
                             )}`}
                           >
@@ -1321,27 +1530,24 @@ export default function Home() {
                         </div>
 
                       </Link>
-
                     )
                   )}
 
               </div>
 
 
-              {/* Full history */}
-              <div className="border-t border-gray-100 px-4 py-4">
+              {/* FULL HISTORY */}
+              <div className="border-t border-slate-100 px-4 py-4">
 
                 <Link
                   href="/history"
-                  className="flex items-center justify-between rounded-xl px-2 py-2 font-semibold text-blue-700 transition hover:bg-blue-50"
+                  className="flex items-center justify-between rounded-xl px-2 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
                 >
                   <span>
                     View full history
                   </span>
 
-                  <span aria-hidden="true">
-                    →
-                  </span>
+                  <ArrowIcon />
                 </Link>
 
               </div>
